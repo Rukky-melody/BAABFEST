@@ -2,6 +2,8 @@ import React from "react";
 import SendWelcomeButton from "./SendWelcomeButton";
 import prisma from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function SubscribersPage() {
   const subscribers = await prisma.subscriber.findMany({
     orderBy: { createdAt: 'desc' }
