@@ -27,10 +27,6 @@ export default function ArchivesAdmin() {
 
   const [newImageUrl, setNewImageUrl] = useState('');
 
-  useEffect(() => {
-    fetchArchives();
-  }, []);
-
   const fetchArchives = async () => {
     try {
       const response = await fetch('/api/admin/archives');
@@ -42,6 +38,10 @@ export default function ArchivesAdmin() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchArchives();
+  }, []);
 
   const handleAddImage = () => {
     if (newImageUrl && formData.images.length < 10) {
