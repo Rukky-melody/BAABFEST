@@ -49,3 +49,5 @@ next-env.d.ts
 dev.db
 test-prisma.ts
 skills-lock.json
+AGENTS.md
+CLAUDE.md
