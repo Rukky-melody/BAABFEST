@@ -29,7 +29,7 @@ export default function Footer() {
         setStatus("error");
         setMessage(data.error || "Failed to subscribe.");
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setMessage("Network error. Please try again.");
     }

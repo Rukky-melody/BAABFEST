@@ -1,7 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { FiPlus, FiTrash2, FiEdit2, FiImage, FiLink, FiX } from 'react-icons/fi';
+import React, { useState, useEffect } from "react";
+import {
+  FiPlus,
+  FiTrash2,
+  FiEdit2,
+  FiImage,
+  FiLink,
+  FiX,
+  FiFolder,
+} from "react-icons/fi";
 
 interface Archive {
   id: string;
@@ -19,21 +27,26 @@ export default function ArchivesAdmin() {
   const [editingArchive, setEditingArchive] = useState<Archive | null>(null);
 
   const [formData, setFormData] = useState({
-    year: '',
-    theme: '',
+    year: "",
+    theme: "",
     images: [] as string[],
-    driveLink: '',
+    driveLink: "",
   });
 
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const fetchArchives = async () => {
     try {
-      const response = await fetch('/api/admin/archives');
+      setIsLoading(true);
+      const response = await fetch("/api/admin/archives");
       const data = await response.json();
-      setArchives(data);
+      if (Array.isArray(data)) {
+        setArchives(data);
+      }
     } catch (error) {
-      console.error('Failed to fetch archives:', error);
+      console.error("Failed to fetch archives:", error);
     } finally {
       setIsLoading(false);
     }
@@ -44,12 +57,12 @@ export default function ArchivesAdmin() {
   }, []);
 
   const handleAddImage = () => {
-    if (newImageUrl && formData.images.length < 10) {
+    if (newImageUrl.trim() && formData.images.length < 12) {
       setFormData({
         ...formData,
-        images: [...formData.images, newImageUrl],
+        images: [...formData.images, newImageUrl.trim()],
       });
-      setNewImageUrl('');
+      setNewImageUrl("");
     }
   };
 
@@ -62,39 +75,45 @@ export default function ArchivesAdmin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
+    setSaving(true);
+
     try {
       const url = editingArchive
         ? `/api/admin/archives/${editingArchive.id}`
-        : '/api/admin/archives';
-      const method = editingArchive ? 'PUT' : 'POST';
+        : "/api/admin/archives";
+      const method = editingArchive ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         setIsModalOpen(false);
         setEditingArchive(null);
-        setFormData({ year: '', theme: '', images: [], driveLink: '' });
+        setFormData({ year: "", theme: "", images: [], driveLink: "" });
         fetchArchives();
       } else {
         const error = await response.json();
-        alert(error.error || 'Something went wrong');
+        setErrorMessage(error.error || "Something went wrong saving the archive.");
       }
     } catch (error) {
-      console.error('Failed to save archive:', error);
+      console.error("Failed to save archive:", error);
+      setErrorMessage("Network error saving archive.");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this archive?')) {
+  const handleDelete = async (id: string, year: string) => {
+    if (window.confirm(`Are you sure you want to delete the archive for ${year}?`)) {
       try {
-        await fetch(`/api/admin/archives/${id}`, { method: 'DELETE' });
+        await fetch(`/api/admin/archives/${id}`, { method: "DELETE" });
         fetchArchives();
       } catch (error) {
-        console.error('Failed to delete archive:', error);
+        console.error("Failed to delete archive:", error);
       }
     }
   };
@@ -104,216 +123,677 @@ export default function ArchivesAdmin() {
     setFormData({
       year: archive.year,
       theme: archive.theme,
-      images: archive.images,
-      driveLink: archive.driveLink || '',
+      images: archive.images || [],
+      driveLink: archive.driveLink || "",
     });
+    setErrorMessage("");
     setIsModalOpen(true);
   };
 
   const openAddModal = () => {
     setEditingArchive(null);
-    setFormData({ year: '', theme: '', images: [], driveLink: '' });
+    setFormData({ year: "", theme: "", images: [], driveLink: "" });
+    setErrorMessage("");
     setIsModalOpen(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Festival Archives</h1>
+    <div style={{ maxWidth: "1100px" }}>
+      {/* Top Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "32px",
+          flexWrap: "wrap",
+          gap: "16px",
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              margin: "0 0 6px",
+              fontFamily: "Georgia, serif",
+              fontSize: "26px",
+              color: "#1F2A44",
+            }}
+          >
+            Festival Archives
+          </h2>
+          <p style={{ margin: 0, fontSize: "14px", color: "#64748B" }}>
+            Manage past festival editions, official themes, gallery photos, and Google Drive archive links.
+          </p>
+        </div>
+
         <button
           onClick={openAddModal}
-          className="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            backgroundColor: "#841014",
+            color: "#ffffff",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            border: "none",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(132, 16, 20, 0.2)",
+          }}
         >
-          <FiPlus />
-          <span>Add Archive</span>
+          <FiPlus size={16} />
+          <span>Add Archive Edition</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {archives.map((archive) => (
-          <div key={archive.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="h-48 bg-gray-100 relative">
-              {archive.images.length > 0 ? (
-                <img
-                  src={archive.images[0]}
-                  alt={`${archive.year} Theme`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <FiImage className="w-12 h-12" />
-                </div>
-              )}
-              <div className="absolute top-4 right-4 flex space-x-2">
-                <button
-                  onClick={() => openEditModal(archive)}
-                  className="p-2 bg-white/90 rounded-lg shadow-sm hover:bg-white text-gray-700 transition-colors"
-                >
-                  <FiEdit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(archive.id)}
-                  className="p-2 bg-white/90 rounded-lg shadow-sm hover:bg-red-50 text-red-600 transition-colors"
-                >
-                  <FiTrash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="px-3 py-1 bg-primary/10 text-primary font-semibold rounded-full text-sm">
-                  {archive.year}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {archive.images.length}/10 photos
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">{archive.theme}</h3>
-              
-              {archive.driveLink && (
-                <a
-                  href={archive.driveLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-800"
-                >
-                  <FiLink />
-                  <span>View Google Drive Folder</span>
-                </a>
-              )}
-            </div>
+      {/* Archives Grid */}
+      {isLoading ? (
+        <div style={{ padding: "60px 0", textAlign: "center", color: "#64748B" }}>
+          Loading festival archives...
+        </div>
+      ) : archives.length === 0 ? (
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "12px",
+            padding: "48px 24px",
+            textAlign: "center",
+            border: "1px dashed #CBD5E1",
+          }}
+        >
+          <div
+            style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "50%",
+              backgroundColor: "#F1F5F9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              color: "#64748B",
+            }}
+          >
+            <FiFolder size={26} />
           </div>
-        ))}
-      </div>
+          <h3 style={{ margin: "0 0 6px", fontFamily: "Georgia, serif", color: "#1F2A44" }}>
+            No Festival Archives Added
+          </h3>
+          <p style={{ margin: "0 0 20px", color: "#64748B", fontSize: "14px" }}>
+            Create an archive edition to preserve festival photos and themes for attendees to browse.
+          </p>
+          <button
+            onClick={openAddModal}
+            style={{
+              backgroundColor: "#1F2A44",
+              color: "#ffffff",
+              padding: "11px 20px",
+              borderRadius: "6px",
+              border: "none",
+              fontSize: "14px",
+              cursor: "pointer",
+            }}
+          >
+            Add First Edition (e.g. 2024 / 2025)
+          </button>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+            gap: "24px",
+          }}
+        >
+          {archives.map((archive) => (
+            <div
+              key={archive.id}
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "12px",
+                border: "1px solid rgba(43,43,43,0.12)",
+                overflow: "hidden",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {/* Cover Photo */}
+              <div
+                style={{
+                  height: "190px",
+                  backgroundColor: "#E2E8F0",
+                  position: "relative",
+                  backgroundImage: archive.images.length > 0 ? `url(${archive.images[0]})` : undefined,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                {archive.images.length === 0 && (
+                  <div
+                    style={{
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#94A3B8",
+                    }}
+                  >
+                    <FiImage size={40} />
+                  </div>
+                )}
+                {/* Year Pill */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "12px",
+                    left: "12px",
+                    backgroundColor: "#1F2A44",
+                    color: "#F0C823",
+                    padding: "4px 12px",
+                    borderRadius: "14px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {archive.year} Edition
+                </div>
 
-      {/* Modal */}
+                {/* Photo Count */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "12px",
+                    right: "12px",
+                    backgroundColor: "rgba(0,0,0,0.65)",
+                    color: "#ffffff",
+                    padding: "3px 10px",
+                    borderRadius: "10px",
+                    fontSize: "11px",
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  📷 {archive.images.length} Photos
+                </div>
+              </div>
+
+              {/* Body Details */}
+              <div style={{ padding: "22px", flex: 1, display: "flex", flexDirection: "column" }}>
+                <h3
+                  style={{
+                    margin: "0 0 10px",
+                    fontFamily: "Georgia, serif",
+                    fontSize: "19px",
+                    color: "#1F2A44",
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {archive.theme}
+                </h3>
+
+                {archive.driveLink && (
+                  <a
+                    href={archive.driveLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "12px",
+                      color: "#A8471F",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    <FiLink size={13} />
+                    <span>Open Full Google Drive Archive ↗</span>
+                  </a>
+                )}
+
+                {/* Thumbnails preview */}
+                {archive.images.length > 1 && (
+                  <div style={{ display: "flex", gap: "6px", marginBottom: "18px" }}>
+                    {archive.images.slice(1, 5).map((img, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "6px",
+                          backgroundImage: `url(${img})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          border: "1px solid #E2E8F0",
+                        }}
+                      />
+                    ))}
+                    {archive.images.length > 5 && (
+                      <div
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "6px",
+                          backgroundColor: "#F1F5F9",
+                          color: "#64748B",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        +{archive.images.length - 5}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions Footer */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    marginTop: "auto",
+                    paddingTop: "16px",
+                    borderTop: "1px solid #F1F5F9",
+                  }}
+                >
+                  <button
+                    onClick={() => openEditModal(archive)}
+                    style={{
+                      flex: 1,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      padding: "9px 12px",
+                      backgroundColor: "#F1F5F9",
+                      color: "#1E293B",
+                      border: "1px solid #CBD5E1",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <FiEdit2 size={13} />
+                    <span>Edit Edition</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(archive.id, archive.year)}
+                    style={{
+                      padding: "9px 12px",
+                      backgroundColor: "#FEF2F2",
+                      color: "#DC2626",
+                      border: "1px solid #FECACA",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    title="Delete edition"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ─── ADD / EDIT ARCHIVE MODAL ─────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
-              <h2 className="text-xl font-bold">
-                {editingArchive ? 'Edit Archive' : 'Add New Archive'}
-              </h2>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "14px",
+              width: "100%",
+              maxWidth: "640px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "20px 24px",
+                borderBottom: "1px solid #E2E8F0",
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontFamily: "Georgia, serif",
+                  fontSize: "18px",
+                  color: "#1F2A44",
+                }}
+              >
+                {editingArchive ? `Edit Archive Edition: ${editingArchive.year}` : "Add New Festival Archive"}
+              </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#64748B",
+                  padding: "4px",
+                }}
               >
-                <FiX />
+                <FiX size={20} />
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+
+            {/* Modal Form */}
+            <form onSubmit={handleSubmit} style={{ padding: "24px" }}>
+              {errorMessage && (
+                <div
+                  style={{
+                    backgroundColor: "#FEF2F2",
+                    color: "#991B1B",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {errorMessage}
+                </div>
+              )}
+
+              {/* Year & Theme Row */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "140px 1fr",
+                  gap: "16px",
+                  marginBottom: "16px",
+                }}
+              >
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Year
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      color: "#64748B",
+                      textTransform: "uppercase",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Festival Year *
                   </label>
                   <input
                     type="text"
-                    required
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                    placeholder="e.g., 2024"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    placeholder="2025"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "14px",
+                      backgroundColor: "#F8FAFC",
+                      boxSizing: "border-box",
+                    }}
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Theme
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      color: "#64748B",
+                      textTransform: "uppercase",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Festival Theme *
                   </label>
                   <input
                     type="text"
-                    required
                     value={formData.theme}
                     onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
-                    placeholder="e.g., The Future is Now"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    placeholder="e.g. Voices Across Time: Ancestral Echoes"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "14px",
+                      backgroundColor: "#F8FAFC",
+                      boxSizing: "border-box",
+                    }}
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              {/* Google Drive Link */}
+              <div style={{ marginBottom: "20px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "#64748B",
+                    textTransform: "uppercase",
+                    marginBottom: "6px",
+                  }}
+                >
                   Google Drive Folder Link (Optional)
                 </label>
                 <input
                   type="url"
                   value={formData.driveLink}
                   onChange={(e) => setFormData({ ...formData, driveLink: e.target.value })}
-                  placeholder="https://drive.google.com/..."
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "14px",
+                    backgroundColor: "#F8FAFC",
+                    boxSizing: "border-box",
+                  }}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Photos ({formData.images.length}/10)
+              {/* Photo URLs List (Matching Rongo Foundation CMS Style) */}
+              <div style={{ marginBottom: "24px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "#64748B",
+                    textTransform: "uppercase",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Gallery Photos ({formData.images.length}/12)
                 </label>
-                <div className="flex space-x-2 mb-4">
+
+                {/* Input row */}
+                <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
                   <input
                     type="url"
                     value={newImageUrl}
                     onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    disabled={formData.images.length >= 10}
-                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:bg-gray-50"
+                    placeholder="Paste image URL (https://...)"
+                    disabled={formData.images.length >= 12}
+                    style={{
+                      flex: 1,
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "14px",
+                      backgroundColor: "#F8FAFC",
+                      boxSizing: "border-box",
+                    }}
                   />
                   <button
                     type="button"
                     onClick={handleAddImage}
-                    disabled={!newImageUrl || formData.images.length >= 10}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50 hover:bg-gray-800 transition-colors"
+                    disabled={!newImageUrl.trim() || formData.images.length >= 12}
+                    style={{
+                      padding: "10px 18px",
+                      backgroundColor: "#1F2A44",
+                      color: "#ffffff",
+                      borderRadius: "6px",
+                      border: "none",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      cursor: !newImageUrl.trim() ? "not-allowed" : "pointer",
+                      opacity: !newImageUrl.trim() ? 0.6 : 1,
+                      whiteSpace: "nowrap",
+                    }}
                   >
-                    Add Image
+                    Add Photo
                   </button>
                 </div>
-                
-                {formData.images.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+
+                {/* Image List Items with Red Trash Bins (matching mock screenshot) */}
+                {formData.images.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {formData.images.map((url, index) => (
-                      <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 bg-gray-50 aspect-square">
-                        <img
-                          src={url}
-                          alt={`Archive photo ${index + 1}`}
-                          className="w-full h-full object-cover"
+                      <div
+                        key={index}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          padding: "8px 12px",
+                          backgroundColor: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                          borderRadius: "8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "48px",
+                            height: "48px",
+                            borderRadius: "6px",
+                            backgroundImage: `url(${url})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            border: "1px solid #CBD5E1",
+                            flexShrink: 0,
+                          }}
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(index)}
-                            className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <span
+                          style={{
+                            flex: 1,
+                            fontSize: "13px",
+                            color: "#334155",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {url}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          style={{
+                            width: "34px",
+                            height: "34px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#FEE2E2",
+                            border: "1px solid #FCA5A5",
+                            borderRadius: "6px",
+                            color: "#DC2626",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                          }}
+                          title="Remove photo"
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: "12px", color: "#94A3B8", fontStyle: "italic" }}>
+                    No photos added yet. Paste image URLs above to populate this edition's gallery.
+                  </p>
                 )}
               </div>
 
-              <div className="flex justify-end pt-4 border-t border-gray-100">
+              {/* Modal Footer */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", paddingTop: "12px", borderTop: "1px solid #E2E8F0" }}>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2 text-gray-600 hover:text-gray-900 font-medium mr-4"
+                  style={{
+                    padding: "10px 18px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    backgroundColor: "#ffffff",
+                    color: "#475569",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium"
+                  disabled={saving}
+                  style={{
+                    padding: "10px 22px",
+                    borderRadius: "6px",
+                    border: "none",
+                    backgroundColor: "#841014",
+                    color: "#ffffff",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: saving ? "not-allowed" : "pointer",
+                    opacity: saving ? 0.7 : 1,
+                  }}
                 >
-                  {editingArchive ? 'Save Changes' : 'Create Archive'}
+                  {saving ? "Saving..." : editingArchive ? "Save Changes" : "Create Archive"}
                 </button>
               </div>
             </form>

@@ -19,6 +19,7 @@ export async function PUT(
     });
     return NextResponse.json(archive);
   } catch (error) {
+    console.error("Failed to update archive:", error);
     return NextResponse.json(
       { error: 'Failed to update archive' },
       { status: 500 }
@@ -26,6 +27,7 @@ export async function PUT(
   }
 }
 
+// DELETE a festival archive
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -37,6 +39,7 @@ export async function DELETE(
     });
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Failed to delete archive:", error);
     return NextResponse.json(
       { error: 'Failed to delete archive' },
       { status: 500 }

@@ -37,11 +37,22 @@ const TEAM_MEMBERS = [
 ];
 
 export default function Team() {
+  const [teamMembers, setTeamMembers] = useState(TEAM_MEMBERS);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
+    // Fetch live team members from CMS
+    fetch("/api/team")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTeamMembers(data);
+        }
+      })
+      .catch((err) => console.log("Using default team members:", err));
+
     const checkMobile = () => setIsMobile(window.innerWidth < 968);
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -49,16 +60,16 @@ export default function Team() {
   }, []);
 
   const handleNext = () => {
-    setActiveIndex((prev) => (prev + 1) % TEAM_MEMBERS.length);
+    setActiveIndex((prev) => (prev + 1) % teamMembers.length);
     setHasInteracted(true);
   };
 
   const handlePrev = () => {
-    setActiveIndex((prev) => (prev - 1 + TEAM_MEMBERS.length) % TEAM_MEMBERS.length);
+    setActiveIndex((prev) => (prev - 1 + teamMembers.length) % teamMembers.length);
     setHasInteracted(true);
   };
 
-  const activeMember = TEAM_MEMBERS[activeIndex];
+  const activeMember = teamMembers[activeIndex] || teamMembers[0];
 
   return (
     <section className={styles.teamSection} id="team">
@@ -85,10 +96,10 @@ export default function Team() {
             )}
           </AnimatePresence>
 
-          {TEAM_MEMBERS.map((member, index) => {
+          {teamMembers.map((member, index) => {
             const isActive = index === activeIndex;
-            const isNext = index === (activeIndex + 1) % TEAM_MEMBERS.length;
-            const isPrev = index === (activeIndex - 1 + TEAM_MEMBERS.length) % TEAM_MEMBERS.length;
+            const isNext = index === (activeIndex + 1) % teamMembers.length;
+            const isPrev = index === (activeIndex - 1 + teamMembers.length) % teamMembers.length;
             
             let zIndex = 0;
             let x = "100%";
@@ -156,12 +167,12 @@ export default function Team() {
               <div className={styles.roleContainer}>
                 <span className={styles.number}>0{activeIndex + 1}</span>
                 <div className={styles.line} />
-                <span className={styles.role}>{activeMember.role}</span>
+                <span className={styles.role}>{activeMember?.role || ""}</span>
               </div>
               
-              <h3 className={styles.name}>{activeMember.name}</h3>
+              <h3 className={styles.name}>{activeMember?.name || ""}</h3>
               
-              <p className={styles.bio}>{activeMember.bio}</p>
+              <p className={styles.bio}>{activeMember?.bio || ""}</p>
             </motion.div>
           </AnimatePresence>
 

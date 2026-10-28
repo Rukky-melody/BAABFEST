@@ -8,6 +8,7 @@ export async function GET() {
     });
     return NextResponse.json(archives);
   } catch (error) {
+    console.error("Failed to fetch archives:", error);
     return NextResponse.json(
       { error: 'Failed to fetch archives' },
       { status: 500 }
@@ -28,7 +29,8 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(archive);
   } catch (error: any) {
-    if (error.code === 'P2002') {
+    console.error("Failed to create archive:", error);
+    if (error?.code === 'P2002') {
       return NextResponse.json(
         { error: 'An archive for this year already exists' },
         { status: 400 }

@@ -21,7 +21,7 @@ export default function SendWelcomeButton({ subscriberId, currentStatus }: { sub
       } else {
         alert(data.error || "Failed to send email");
       }
-    } catch (err) {
+    } catch {
       alert("Something went wrong");
     } finally {
       setLoading(false);
