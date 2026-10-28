@@ -23,24 +23,26 @@ export async function POST(req: Request) {
     }
 
     // 2. Check if already subscribed in our database
-    const existingSubscriber = await prisma.subscriber.findUnique({
+    let subscriber = await prisma.subscriber.findUnique({
       where: { email: trimmedEmail },
     });
 
-    if (existingSubscriber) {
+    if (subscriber && subscriber.status === "WELCOMED") {
       return NextResponse.json(
         { error: "You're already subscribed to the BAABFEST newsletter!" },
         { status: 400 }
       );
     }
 
-    // 3. Save subscriber to MongoDB
-    const subscriber = await prisma.subscriber.create({
-      data: {
-        email: trimmedEmail,
-        status: "SUBSCRIBED",
-      },
-    });
+    // 3. Save subscriber to MongoDB if new
+    if (!subscriber) {
+      subscriber = await prisma.subscriber.create({
+        data: {
+          email: trimmedEmail,
+          status: "SUBSCRIBED",
+        },
+      });
+    }
 
     // 4. Sync contact to Brevo (non-blocking — don't fail the request if Brevo is down)
     let brevoSynced = false;
