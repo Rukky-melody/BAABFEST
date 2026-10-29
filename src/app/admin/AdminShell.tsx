@@ -32,8 +32,19 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [adminEmail, setAdminEmail] = useState<string>("admin@baabfest.com");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const isLoginPage = pathname === "/admin/login";
+
+  // Screen size detection for responsive mobile drawer
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Auto-close mobile drawer when navigating between pages
   useEffect(() => {
@@ -111,265 +122,316 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <div className={styles.adminLayout}>
       {/* ─── MOBILE BACKDROP ─────────────────────────────────────────── */}
-      {isMobileOpen && (
-        <div
-          className={styles.backdrop}
-          onClick={() => setIsMobileOpen(false)}
-        ></div>
-      )}
+        { isMobile && isMobileOpen && (
+          <div
+            onClick={() => setIsMobileOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(15, 23, 42, 0.65)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+              zIndex: 998,
+              cursor: "pointer",
+            }}
+            aria-label="Close menu backdrop"
+          ></div>
+        )}
 
       {/* ─── SIDEBAR (Matching Rongo CMS Style & Mobile Drawer) ──────── */}
-        <aside
-          className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarOpen : ""}`}
-          style={isMobileOpen ? { transform: "translateX(0)" } : undefined}
+      <aside
+        style={{
+          width: isMobile ? "280px" : "260px",
+          backgroundColor: "#1F2A44",
+          color: "#F4EFE8",
+          display: "flex",
+          flexDirection: "column",
+          flexShrink: 0,
+          borderRight: "1px solid rgba(255,255,255,0.06)",
+          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          ...(isMobile
+            ? {
+              position: "fixed",
+              top: 0,
+              bottom: 0,
+              left: 0,
+              height: "100vh",
+              zIndex: 999,
+              boxShadow: "4px 0 25px rgba(0,0,0,0.45)",
+              transform: isMobileOpen ? "translateX(0)" : "translateX(-100%)",
+            }
+            : {
+              position: "static",
+              transform: "none",
+            }),
+        }}
+      >
+        {/* Brand Header */}
+        <div
+          style={{
+            padding: "26px 20px 20px",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+          }}
         >
-          {/* Brand Header */}
-          <div
-            style={{
-              padding: "26px 20px 20px",
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  margin: 0,
-                  fontFamily: "Georgia, serif",
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "#F4EFE8",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                BAABFEST
-              </h2>
-              <p
-                style={{
-                  margin: "6px 0 0",
-                  fontSize: "10px",
-                  color: "#8B9DAF",
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                }}
-              >
-                Content Management
-              </p>
-            </div>
+          <div>
+            <h2
+              style={{
+                margin: 0,
+                fontFamily: "Georgia, serif",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "#F4EFE8",
+                letterSpacing: "0.02em",
+              }}
+            >
+              BAABFEST
+            </h2>
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontSize: "10px",
+                color: "#8B9DAF",
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                fontWeight: 600,
+              }}
+            >
+              Content Management
+            </p>
+          </div>
 
-            {/* Mobile close button */}
+          {/* Mobile close button */}
+          {isMobile && (
             <button
               type="button"
-              className={styles.mobileCloseBtn}
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMobileOpen(false);
               }}
-              style={{ cursor: "pointer" }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#94A3B8",
+                cursor: "pointer",
+                padding: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
               aria-label="Close menu"
             >
               <FiX size={22} />
             </button>
-          </div>
+          )}
+        </div>
 
-          {/* Navigation Links */}
-          <nav
-            style={{
-              flex: 1,
-              padding: "10px 16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-            }}
-          >
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                item.href === pathname ||
-                (item.href !== "/admin" && pathname.startsWith(item.href));
+        {/* Navigation Links */}
+        <nav
+          style={{
+            flex: 1,
+            padding: "10px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+          }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              item.href === pathname ||
+              (item.href !== "/admin" && pathname.startsWith(item.href));
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileOpen(false)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "11px 14px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    fontSize: "14px",
-                    fontWeight: isActive ? 600 : 400,
-                    color: isActive ? "#F0C823" : "#CBD5E1",
-                    backgroundColor: isActive ? "rgba(255, 255, 255, 0.08)" : "transparent",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <Icon size={18} style={{ color: isActive ? "#F0C823" : "#94A3B8" }} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-
-            {/* View Live Site button in sidebar */}
-            <div style={{ marginTop: "auto", paddingTop: "12px" }}>
-              <a
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
                 onClick={() => setIsMobileOpen(false)}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "12px",
-                  padding: "10px 14px",
+                  padding: "11px 14px",
                   borderRadius: "8px",
                   textDecoration: "none",
-                  fontSize: "13px",
-                  color: "#94A3B8",
-                  backgroundColor: "rgba(255, 255, 255, 0.04)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  transition: "all 0.2s ease",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#F0C823";
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "#94A3B8";
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+                  fontSize: "14px",
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? "#F0C823" : "#CBD5E1",
+                  backgroundColor: isActive ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                  transition: "all 0.15s ease",
                 }}
               >
-                <FiExternalLink size={16} />
-                <span>View Live Site</span>
-              </a>
-            </div>
-          </nav>
+                <Icon size={18} style={{ color: isActive ? "#F0C823" : "#94A3B8" }} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
 
-          {/* Sidebar Footer (Signed in as + Sign out) */}
-          <div
-            style={{
-              padding: "20px",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-              backgroundColor: "rgba(0,0,0,0.15)",
-            }}
-          >
-            <div style={{ marginBottom: "12px" }}>
-              <span
-                style={{
-                  display: "block",
-                  fontSize: "11px",
-                  color: "#8B9DAF",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Signed in as
-              </span>
-              <span
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  color: "#E2E8F0",
-                  fontWeight: 500,
-                  marginTop: "2px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {adminEmail}
-              </span>
-            </div>
-
-            <button
-              onClick={handleSignOut}
+          {/* View Live Site button in sidebar */}
+          <div style={{ marginTop: "auto", paddingTop: "12px" }}>
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsMobileOpen(false)}
               style={{
-                width: "100%",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                padding: "10px",
-                backgroundColor: "rgba(132, 16, 20, 0.25)",
-                color: "#FCA5A5",
-                border: "1px solid rgba(132, 16, 20, 0.4)",
-                borderRadius: "6px",
+                gap: "12px",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                textDecoration: "none",
                 fontSize: "13px",
-                fontWeight: 500,
+                color: "#94A3B8",
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                transition: "all 0.2s ease",
                 cursor: "pointer",
-                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#F0C823";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#94A3B8";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
               }}
             >
-              <FiLogOut size={14} />
-              <span>Sign Out</span>
-            </button>
+              <FiExternalLink size={16} />
+              <span>View Live Site</span>
+            </a>
           </div>
-        </aside>
+        </nav>
 
-        {/* ─── MAIN CONTENT AREA ───────────────────────────────────────── */}
-        <div className={styles.mainContent}>
-          {/* Top Header Bar */}
-          <header className={styles.topHeader}>
-            <div className={styles.headerLeft}>
+        {/* Sidebar Footer (Signed in as + Sign out) */}
+        <div
+          style={{
+            padding: "20px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            backgroundColor: "rgba(0,0,0,0.15)",
+          }}
+        >
+          <div style={{ marginBottom: "12px" }}>
+            <span
+              style={{
+                display: "block",
+                fontSize: "11px",
+                color: "#8B9DAF",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              Signed in as
+            </span>
+            <span
+              style={{
+                display: "block",
+                fontSize: "12px",
+                color: "#E2E8F0",
+                fontWeight: 500,
+                marginTop: "2px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {adminEmail}
+            </span>
+          </div>
+
+          <button
+            onClick={handleSignOut}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              padding: "10px",
+              backgroundColor: "rgba(132, 16, 20, 0.25)",
+              color: "#FCA5A5",
+              border: "1px solid rgba(132, 16, 20, 0.4)",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <FiLogOut size={14} />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ─── MAIN CONTENT AREA ───────────────────────────────────────── */}
+      <div className={styles.mainContent}>
+        {/* Top Header Bar */}
+        <header className={styles.topHeader}>
+          <div className={styles.headerLeft}>
+            {isMobile && (
               <button
                 type="button"
-                className={styles.mobileMenuBtn}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsMobileOpen(true);
                 }}
                 style={{
+                  background: "none",
+                  border: "none",
+                  color: "#1F2A44",
                   cursor: "pointer",
+                  padding: "8px",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   WebkitTapHighlightColor: "transparent",
                 }}
                 aria-label="Open sidebar navigation"
               >
                 <FiMenu size={24} />
               </button>
-              <h1 className={styles.pageTitle}>{pageTitle}</h1>
-            </div>
+            )}
+            <h1 className={styles.pageTitle}>{pageTitle}</h1>
+          </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {/* CMS Active status pill */}
-              <div
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* CMS Active status pill */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                padding: "5px 12px",
+                borderRadius: "20px",
+                backgroundColor: "#ECFDF5",
+                border: "1px solid #A7F3D0",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#065F46",
+              }}
+            >
+              <span
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  padding: "5px 12px",
-                  borderRadius: "20px",
-                  backgroundColor: "#ECFDF5",
-                  border: "1px solid #A7F3D0",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "#065F46",
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  backgroundColor: "#10B981",
+                  display: "inline-block",
                 }}
-              >
-                <span
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: "#10B981",
-                    display: "inline-block",
-                  }}
-                ></span>
-                <span>CMS Active</span>
-              </div>
+              ></span>
+              <span>CMS Active</span>
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* Main Body */}
-          <main className={styles.mainBody}>
-            {children}
-          </main>
-        </div>
+        {/* Main Body */}
+        <main className={styles.mainBody}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
