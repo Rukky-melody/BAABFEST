@@ -119,7 +119,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       )}
 
       {/* ─── SIDEBAR (Matching Rongo CMS Style & Mobile Drawer) ──────── */}
-      <aside className={`${styles.sidebar} ${isMobileOpen ? styles.open : ""}`}>
+      <aside
+        className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarOpen : ""}`}
+        style={isMobileOpen ? { transform: "translateX(0)" } : undefined}
+      >
         {/* Brand Header */}
         <div
           style={{

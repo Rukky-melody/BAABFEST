@@ -9,7 +9,7 @@
   overflow-x: hidden;
 }
 
-/* Sidebar (Desktop default) */
+/* Sidebar default (Desktop) */
 .sidebar {
   width: 260px;
   background-color: #1F2A44;
@@ -22,12 +22,17 @@
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.sidebarOpen {
+  transform: translateX(0) !important;
+}
+
 /* Mobile backdrop */
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(2px);
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   z-index: 90;
 }
 
@@ -127,27 +132,6 @@
     z-index: 100;
   }
 
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background-color: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(2px);
-    z-index: 90;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.28s ease;
-  }
-
-  .backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
   .mobileMenuBtn {
     display: inline-flex;
   }
@@ -169,4 +153,3 @@
     padding: 20px 14px;
   }
 }
-
