@@ -31,11 +31,12 @@ export default async function ApplicationsPage() {
           backgroundColor: "#ffffff",
           borderRadius: "12px",
           border: "1px solid rgba(43,43,43,0.12)",
-          overflow: "hidden",
+          overflowX: "auto",
+          WebkitOverflowScrolling: "touch",
           boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         }}
       >
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", minWidth: "750px", borderCollapse: "collapse" }}>
           <thead>
             <tr
               style={{

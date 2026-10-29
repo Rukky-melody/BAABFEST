@@ -13,8 +13,8 @@ export default async function SubscribersPage() {
     <div>
       <h1 style={{ marginBottom: '20px', fontFamily: 'Fraunces, serif', color: '#841014' }}>Newsletter Subscribers</h1>
       
-      <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid rgba(43,43,43,0.14)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid rgba(43,43,43,0.14)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', minWidth: '550px', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ backgroundColor: '#F4EFE8', textAlign: 'left', borderBottom: '1px solid rgba(43,43,43,0.14)' }}>
               <th style={{ padding: '16px' }}>Email</th>

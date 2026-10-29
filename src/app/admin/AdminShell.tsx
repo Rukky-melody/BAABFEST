@@ -12,7 +12,10 @@ import {
   FiLogOut,
   FiHome,
   FiExternalLink,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
+import styles from "./AdminShell.module.css";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/admin", icon: FiHome },
@@ -28,8 +31,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const [adminEmail, setAdminEmail] = useState<string>("admin@baabfest.com");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const isLoginPage = pathname === "/admin/login";
+
+  // Auto-close mobile drawer when navigating between pages
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (isLoginPage) {
@@ -100,52 +109,62 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pageTitle = currentNav?.label || "Content Management";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        backgroundColor: "#F8F6F2",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-      }}
-    >
-      {/* ─── SIDEBAR (Matching Rongo CMS Style) ──────────────────────── */}
-      <aside
-        style={{
-          width: "260px",
-          backgroundColor: "#1F2A44",
-          color: "#F4EFE8",
-          display: "flex",
-          flexDirection: "column",
-          flexShrink: 0,
-          borderRight: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
+    <div className={styles.adminLayout}>
+      {/* ─── MOBILE BACKDROP ─────────────────────────────────────────── */}
+      {isMobileOpen && (
+        <div
+          className={styles.backdrop}
+          onClick={() => setIsMobileOpen(false)}
+        ></div>
+      )}
+
+      {/* ─── SIDEBAR (Matching Rongo CMS Style & Mobile Drawer) ──────── */}
+      <aside className={`${styles.sidebar} ${isMobileOpen ? styles.open : ""}`}>
         {/* Brand Header */}
-        <div style={{ padding: "30px 24px 24px" }}>
-          <h2
-            style={{
-              margin: 0,
-              fontFamily: "Georgia, serif",
-              fontSize: "20px",
-              fontWeight: 700,
-              color: "#F4EFE8",
-              letterSpacing: "0.02em",
-            }}
+        <div
+          style={{
+            padding: "26px 20px 20px",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                margin: 0,
+                fontFamily: "Georgia, serif",
+                fontSize: "20px",
+                fontWeight: 700,
+                color: "#F4EFE8",
+                letterSpacing: "0.02em",
+              }}
+            >
+              BAABFEST
+            </h2>
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontSize: "10px",
+                color: "#8B9DAF",
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                fontWeight: 600,
+              }}
+            >
+              Content Management
+            </p>
+          </div>
+
+          {/* Mobile close button */}
+          <button
+            type="button"
+            className={styles.mobileCloseBtn}
+            onClick={() => setIsMobileOpen(false)}
+            aria-label="Close menu"
           >
-            BAABFEST
-          </h2>
-          <p
-            style={{
-              margin: "6px 0 0",
-              fontSize: "10px",
-              color: "#8B9DAF",
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              fontWeight: 600,
-            }}
-          >
-            Content Management
-          </p>
+            <FiX size={20} />
+          </button>
         </div>
 
         {/* Navigation Links */}
@@ -168,6 +187,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setIsMobileOpen(false)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -194,6 +214,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               href="/"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => setIsMobileOpen(false)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -285,42 +306,29 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </aside>
 
       {/* ─── MAIN CONTENT AREA ───────────────────────────────────────── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div className={styles.mainContent}>
         {/* Top Header Bar */}
-        <header
-          style={{
-            height: "70px",
-            backgroundColor: "#ffffff",
-            borderBottom: "1px solid rgba(43,43,43,0.08)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 36px",
-            flexShrink: 0,
-            position: "relative",
-            zIndex: 40,
-          }}
-        >
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: "Georgia, serif",
-              fontSize: "22px",
-              fontWeight: 600,
-              color: "#1F2A44",
-            }}
-          >
-            {pageTitle}
-          </h1>
+        <header className={styles.topHeader}>
+          <div className={styles.headerLeft}>
+            <button
+              type="button"
+              className={styles.mobileMenuBtn}
+              onClick={() => setIsMobileOpen(true)}
+              aria-label="Open sidebar navigation"
+            >
+              <FiMenu size={22} />
+            </button>
+            <h1 className={styles.pageTitle}>{pageTitle}</h1>
+          </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-            {/* CMS Active status pill matching mock */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* CMS Active status pill */}
             <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                padding: "6px 14px",
+                gap: "7px",
+                padding: "5px 12px",
                 borderRadius: "20px",
                 backgroundColor: "#ECFDF5",
                 border: "1px solid #A7F3D0",
@@ -337,14 +345,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   backgroundColor: "#10B981",
                   display: "inline-block",
                 }}
-              />
+              ></span>
               <span>CMS Active</span>
             </div>
           </div>
         </header>
 
         {/* Main Body */}
-        <main style={{ flex: 1, padding: "36px", overflowY: "auto" }}>
+        <main className={styles.mainBody}>
           {children}
         </main>
       </div>
