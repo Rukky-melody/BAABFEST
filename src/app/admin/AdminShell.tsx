@@ -187,6 +187,40 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               </Link>
             );
           })}
+
+          {/* View Live Site button in sidebar */}
+          <div style={{ marginTop: "auto", paddingTop: "12px" }}>
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                textDecoration: "none",
+                fontSize: "13px",
+                color: "#94A3B8",
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                transition: "all 0.2s ease",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#F0C823";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#94A3B8";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+              }}
+            >
+              <FiExternalLink size={16} />
+              <span>View Live Site</span>
+            </a>
+          </div>
         </nav>
 
         {/* Sidebar Footer (Signed in as + Sign out) */}
@@ -306,42 +340,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               />
               <span>CMS Active</span>
             </div>
-
-            {/* Back to site link */}
-            <button
-              type="button"
-              onClick={() => {
-                window.open("/", "_blank", "noopener,noreferrer");
-              }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "13px",
-                color: "#475569",
-                fontWeight: 600,
-                cursor: "pointer",
-                padding: "7px 14px",
-                borderRadius: "6px",
-                backgroundColor: "#F1F5F9",
-                border: "1px solid #CBD5E1",
-                transition: "all 0.2s ease",
-                outline: "none",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#841014";
-                e.currentTarget.style.borderColor = "#841014";
-                e.currentTarget.style.backgroundColor = "#E2E8F0";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#475569";
-                e.currentTarget.style.borderColor = "#CBD5E1";
-                e.currentTarget.style.backgroundColor = "#F1F5F9";
-              }}
-            >
-              <span>View Site</span>
-              <FiExternalLink size={13} />
-            </button>
           </div>
         </header>
 
