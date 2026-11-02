@@ -266,3 +266,150 @@ Register for BAABFEST 2026: https://bit.ly/471rmhn
 
 © 2026 Benin Arts and Books Festival. All Rights Reserved.`;
 }
+
+// ─── Campaign Email Template ──────────────────────────────────────
+
+export interface CampaignEmailOptions {
+  heading: string;
+  message: string;
+  previewText?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+}
+
+/**
+ * Returns the HTML content for an admin broadcast campaign email.
+ * Formats paragraphs, preserves lines, includes optional CTA button,
+ * and maintains the BAABFEST visual identity.
+ */
+export function getCampaignEmailHTML({
+  heading,
+  message,
+  previewText,
+  ctaText,
+  ctaUrl,
+}: CampaignEmailOptions): string {
+  // Split message into paragraphs and preserve linebreaks
+  const paragraphs = message
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => {
+      const sanitized = block
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br />");
+      return `<p style="margin: 0 0 16px; font-size: 15px; line-height: 1.7; color: #2B2B2B;">${sanitized}</p>`;
+    })
+    .join("");
+
+  const preheaderHTML = previewText
+    ? `<div style="display:none;font-size:1px;color:#333;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        ${previewText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+      </div>`
+    : "";
+
+  const ctaHTML =
+    ctaText && ctaUrl
+      ? `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 28px 0 12px;">
+        <tr>
+          <td align="center">
+            <a href="${ctaUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 14px 34px; background-color: #A8471F; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 8px; letter-spacing: 0.02em;">
+              ${ctaText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+            </a>
+          </td>
+        </tr>
+      </table>`
+      : "";
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${heading.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F4EFE8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  ${preheaderHTML}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F4EFE8; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1F2A44 0%, #841014 100%); padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; font-family: Georgia, serif; font-size: 28px; color: #F0C823; letter-spacing: 0.06em;">
+                BAABFEST
+              </h1>
+              <p style="margin: 8px 0 0; font-size: 13px; color: #E8DABB; letter-spacing: 0.15em; text-transform: uppercase;">
+                Benin Arts &amp; Books Festival
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 36px 32px 24px;">
+              <h2 style="margin: 0 0 18px; font-family: Georgia, serif; font-size: 22px; color: #841014; line-height: 1.35;">
+                ${heading.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+              </h2>
+              
+              ${paragraphs}
+              ${ctaHTML}
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 32px;">
+              <hr style="border: none; border-top: 1px solid #E8DABB; margin: 0;" />
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px 32px; text-align: center;">
+              <p style="margin: 0 0 8px; font-size: 13px; color: #888;">
+                📍 Victor Uwaifo Creative Hub, Benin City, Edo State
+              </p>
+              <p style="margin: 0 0 8px; font-size: 13px; color: #888;">
+                🗓️ November 12–14, 2026
+              </p>
+              <p style="margin: 12px 0 0; font-size: 12px; color: #94A3B8;">
+                You are receiving this official festival newsletter because you subscribed at baabfest.com.
+              </p>
+              <p style="margin: 12px 0 0; font-size: 11px; color: #aaa;">
+                © 2026 Benin Arts and Books Festival. All Rights Reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export function getCampaignEmailText({
+  heading,
+  message,
+  ctaText,
+  ctaUrl,
+}: CampaignEmailOptions): string {
+  const ctaPart = ctaText && ctaUrl ? `\n\n${ctaText}: ${ctaUrl}` : "";
+  return `${heading.toUpperCase()}
+  
+${message}${ctaPart}
+
+📍 Victor Uwaifo Creative Hub, Benin City, Edo State
+🗓️ November 12–14, 2026
+
+© 2026 Benin Arts and Books Festival. All Rights Reserved.
+You received this email because you subscribed to BAABFEST updates.`;
+}

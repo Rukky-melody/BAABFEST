@@ -1,16 +1,17 @@
 import React from "react";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { FiUsers, FiArchive, FiMail, FiFileText, FiArrowRight, FiShield } from "react-icons/fi";
+import { FiUsers, FiArchive, FiMail, FiFileText, FiArrowRight, FiShield, FiSend } from "react-icons/fi";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [teamCount, archiveCount, subscriberCount, applicationCount] = await Promise.all([
+  const [teamCount, archiveCount, subscriberCount, applicationCount, campaignCount] = await Promise.all([
     prisma.teamMember.count(),
     prisma.festivalArchive.count(),
     prisma.subscriber.count(),
     prisma.application.count(),
+    prisma.campaign.count(),
   ]);
 
   const cards = [
@@ -37,6 +38,14 @@ export default async function AdminDashboard() {
       href: "/admin/subscribers",
       icon: FiMail,
       color: "#1F2A44",
+    },
+    {
+      label: "Email Campaigns",
+      count: campaignCount,
+      desc: "Broadcast messages to all subscribers",
+      href: "/admin/campaigns",
+      icon: FiSend,
+      color: "#D97706",
     },
     {
       label: "Applications",

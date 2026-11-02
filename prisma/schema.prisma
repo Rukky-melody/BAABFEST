@@ -59,3 +59,20 @@ model FestivalArchive {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Campaign {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  subject        String
+  previewText    String?
+  heading        String
+  message        String
+  ctaText        String?
+  ctaUrl         String?
+  recipientCount Int       @default(0)
+  sentCount      Int       @default(0)
+  failedCount    Int       @default(0)
+  status         String    @default("DRAFT") // DRAFT, SENT
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+}
