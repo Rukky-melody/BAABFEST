@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifyPassword, createSessionToken, AUTH_COOKIE_NAME } from "@/lib/auth";
+import {
+  verifyPassword,
+  createSessionToken,
+  AUTH_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -31,13 +36,13 @@ export async function POST(req: Request) {
       user: { id: admin.id, email: admin.email },
     });
 
-    // Set secure HTTP-only cookie
+    // Set secure HTTP-only cookie with 24-hour expiration
     response.cookies.set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: SESSION_MAX_AGE_SECONDS, // 24 hours (1 day)
     });
 
     return response;

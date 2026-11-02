@@ -5,6 +5,10 @@ import prisma from "./prisma";
 const AUTH_COOKIE_NAME = "baabfest_admin_session";
 const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || "baabfest-secret-key-2026-arts-and-books";
 
+// 24 Hours (1 Day) session expiration
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24; // 86,400 seconds
+export const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
+
 /**
  * Hashes a plaintext password with a salt using PBKDF2.
  */
@@ -25,13 +29,13 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 }
 
 /**
- * Creates a signed session token.
+ * Creates a signed session token with 24-hour expiration.
  */
 export function createSessionToken(userId: string, email: string): string {
   const payload = JSON.stringify({
     userId,
     email,
-    exp: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 days
+    exp: Date.now() + SESSION_MAX_AGE_MS, // 24 hours (1 day)
   });
   const base64Payload = Buffer.from(payload).toString("base64url");
   const signature = crypto
