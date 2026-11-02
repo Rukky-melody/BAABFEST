@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const [campaigns, totalActive, subscribedCount, welcomedCount] = await Promise.all([
-      prisma.campaign.findMany({
-        orderBy: { createdAt: "desc" },
-      }),
+      prisma.campaign
+        ? prisma.campaign.findMany({ orderBy: { createdAt: "desc" } }).catch(() => [])
+        : Promise.resolve([]),
       prisma.subscriber.count({
         where: {
           status: { in: ["SUBSCRIBED", "WELCOMED"] },

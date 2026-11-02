@@ -48,10 +48,10 @@ export async function POST(req: Request) {
       subscriber: updatedSubscriber,
       messageId: emailResult.messageId,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending welcome email:", error);
     return NextResponse.json(
-      { error: "Failed to send email" },
+      { error: error?.message || "Failed to send email" },
       { status: 500 }
     );
   }

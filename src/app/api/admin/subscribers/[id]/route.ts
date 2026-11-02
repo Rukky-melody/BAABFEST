@@ -37,10 +37,10 @@ export async function DELETE(
       success: true,
       message: `Subscriber ${subscriber.email} removed successfully.`,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting subscriber:", error);
     return NextResponse.json(
-      { error: "Failed to delete subscriber." },
+      { error: error?.message || "Failed to delete subscriber." },
       { status: 500 }
     );
   }

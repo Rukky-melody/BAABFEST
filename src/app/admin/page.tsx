@@ -7,11 +7,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
   const [teamCount, archiveCount, subscriberCount, applicationCount, campaignCount] = await Promise.all([
-    prisma.teamMember.count(),
-    prisma.festivalArchive.count(),
-    prisma.subscriber.count(),
-    prisma.application.count(),
-    prisma.campaign.count(),
+    prisma.teamMember.count().catch(() => 0),
+    prisma.festivalArchive.count().catch(() => 0),
+    prisma.subscriber.count().catch(() => 0),
+    prisma.application.count().catch(() => 0),
+    (prisma.campaign ? prisma.campaign.count() : Promise.resolve(0)).catch(() => 0),
   ]);
 
   const cards = [
