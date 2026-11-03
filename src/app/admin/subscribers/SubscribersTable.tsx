@@ -57,9 +57,9 @@ export default function SubscribersTable({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: welcomeTarget.id }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (res.ok) {
+      if (res.ok && data.success) {
         // Optimistically update subscriber status in UI
         setSubscribers((prev) =>
           prev.map((sub) =>
@@ -97,9 +97,9 @@ export default function SubscribersTable({
       const res = await fetch(`/api/admin/subscribers/${deleteTarget.id}`, {
         method: "DELETE",
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (res.ok) {
+      if (res.ok && data.success) {
         // Optimistically remove subscriber from UI
         setSubscribers((prev) => prev.filter((sub) => sub.id !== deleteTarget.id));
         showNotification(

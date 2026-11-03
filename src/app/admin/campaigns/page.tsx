@@ -13,6 +13,8 @@ import {
   FiX,
   FiCopy,
   FiRefreshCw,
+  FiTrash2,
+  FiAlertTriangle,
 } from "react-icons/fi";
 
 interface Campaign {
@@ -42,6 +44,10 @@ export default function CampaignsAdminPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [audience, setAudience] = useState<Audience>({ total: 0, subscribed: 0, welcomed: 0 });
   const [loading, setLoading] = useState(true);
+  const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
+  const [senderEmail, setSenderEmail] = useState<string>("hello@baabfest.com");
+  const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
+  const [isDeletingCampaign, setIsDeletingCampaign] = useState(false);
 
   // Form State
   const [subject, setSubject] = useState("");
@@ -74,6 +80,8 @@ export default function CampaignsAdminPage() {
       const data = await res.json();
       if (data?.campaigns) setCampaigns(data.campaigns);
       if (data?.audience) setAudience(data.audience);
+      if (data?.emailConfigured !== undefined) setEmailConfigured(Boolean(data.emailConfigured));
+      if (data?.senderEmail) setSenderEmail(data.senderEmail);
     } catch (err) {
       console.error("Error loading campaigns:", err);
     } finally {
@@ -168,24 +176,61 @@ export default function CampaignsAdminPage() {
       });
 
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.success && data.sentCount > 0) {
         setNotification({
           type: "success",
-          message: `Campaign broadcast complete! Sent to ${data.sentCount} subscriber${data.sentCount === 1 ? "" : "s"}${data.failedCount > 0 ? ` (${data.failedCount} failed)` : ""}.`,
+          message: `Campaign broadcast complete! Delivered to ${data.sentCount} subscriber${data.sentCount === 1 ? "" : "s"}${data.failedCount > 0 ? ` (${data.failedCount} failed)` : ""}.`,
         });
         // Refresh campaign history
         fetchCampaignsAndAudience();
         setActiveTab("history");
       } else {
+        const errorDetail = data.details?.length
+          ? ` Details: ${data.details.join("; ")}`
+          : "";
         setNotification({
           type: "error",
-          message: data.error || "Failed to broadcast campaign.",
+          message: (data.error || "Failed to broadcast campaign.") + errorDetail,
         });
+        fetchCampaignsAndAudience();
       }
     } catch (err: any) {
       setNotification({ type: "error", message: err.message || "Network error broadcasting campaign." });
     } finally {
       setBroadcasting(false);
+    }
+  };
+
+  const handleDeleteCampaign = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      setIsDeletingCampaign(true);
+      const res = await fetch(`/api/admin/campaigns/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+        setNotification({
+          type: "success",
+          message: `Campaign "${deleteTarget.subject}" was deleted successfully.`,
+        });
+        setDeleteTarget(null);
+      } else {
+        setNotification({
+          type: "error",
+          message: data.error || "Failed to delete campaign.",
+        });
+      }
+    } catch (err: any) {
+      setNotification({
+        type: "error",
+        message: err?.message || "Network error while deleting campaign.",
+      });
+    } finally {
+      setIsDeletingCampaign(false);
     }
   };
 
@@ -261,6 +306,32 @@ export default function CampaignsAdminPage() {
         </p>
       </div>
 
+      {/* Email Service Configuration Alert */}
+      {emailConfigured === false && (
+        <div
+          style={{
+            backgroundColor: "#FEF2F2",
+            border: "1px solid #FCA5A5",
+            borderRadius: "10px",
+            padding: "16px 20px",
+            marginBottom: "24px",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "14px",
+            color: "#991B1B",
+          }}
+        >
+          <FiAlertTriangle size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
+          <div style={{ flex: 1, fontSize: "13px", lineHeight: "1.5" }}>
+            <strong style={{ fontSize: "14px", display: "block", marginBottom: "3px" }}>
+              Email Service Disconnected (BREVO_API_KEY Missing on Server)
+            </strong>
+            The server cannot dispatch emails because <code>BREVO_API_KEY</code> is not set in this environment.
+            If running on Vercel, please go to your <strong>Vercel Project Settings → Environment Variables</strong>, add <code>BREVO_API_KEY</code> and <code>BREVO_SENDER_EMAIL</code>, and trigger a <strong>Redeploy</strong>.
+          </div>
+        </div>
+      )}
+
       {/* Audience Banner */}
       <div
         style={{
@@ -305,26 +376,55 @@ export default function CampaignsAdminPage() {
           </div>
         </div>
 
-        <button
-          onClick={fetchCampaignsAndAudience}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "none",
-            border: "1px solid #E2E8F0",
-            padding: "8px 14px",
-            borderRadius: "6px",
-            fontSize: "12px",
-            color: "#64748B",
-            cursor: "pointer",
-            fontWeight: 500,
-          }}
-          title="Refresh audience count"
-        >
-          <FiRefreshCw size={13} />
-          <span>Refresh Audience</span>
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          {emailConfigured !== null && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "12px",
+                fontWeight: 600,
+                padding: "6px 12px",
+                borderRadius: "20px",
+                backgroundColor: emailConfigured ? "#ECFDF5" : "#FEF2F2",
+                color: emailConfigured ? "#065F46" : "#991B1B",
+                border: `1px solid ${emailConfigured ? "#A7F3D0" : "#FECACA"}`,
+              }}
+            >
+              <span
+                style={{
+                  width: "7px",
+                  height: "7px",
+                  borderRadius: "50%",
+                  backgroundColor: emailConfigured ? "#10B981" : "#EF4444",
+                }}
+              />
+              {emailConfigured ? "Email Service: Ready" : "Email Service: Disconnected"}
+            </span>
+          )}
+
+          <button
+            onClick={fetchCampaignsAndAudience}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "none",
+              border: "1px solid #E2E8F0",
+              padding: "8px 14px",
+              borderRadius: "6px",
+              fontSize: "12px",
+              color: "#64748B",
+              cursor: "pointer",
+              fontWeight: 500,
+            }}
+            title="Refresh audience count"
+          >
+            <FiRefreshCw size={13} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Notification Banner */}
@@ -882,12 +982,20 @@ export default function CampaignsAdminPage() {
                             backgroundColor:
                               camp.status === "SENT"
                                 ? "#ECFDF5"
+                                : camp.status === "FAILED"
+                                ? "#FEE2E2"
+                                : camp.status === "PARTIAL"
+                                ? "#FEF3C7"
                                 : camp.status === "SENDING"
                                 ? "#EFF6FF"
                                 : "#FEF3C7",
                             color:
                               camp.status === "SENT"
                                 ? "#065F46"
+                                : camp.status === "FAILED"
+                                ? "#991B1B"
+                                : camp.status === "PARTIAL"
+                                ? "#92400E"
                                 : camp.status === "SENDING"
                                 ? "#1E40AF"
                                 : "#92400E",
@@ -896,7 +1004,7 @@ export default function CampaignsAdminPage() {
                           {camp.status}
                         </span>
                       </td>
-                      <td style={{ padding: "16px 20px", textAlign: "right" }}>
+                      <td style={{ padding: "16px 20px", textAlign: "right", whiteSpace: "nowrap" }}>
                         <button
                           onClick={() => duplicateCampaign(camp)}
                           style={{
@@ -916,6 +1024,28 @@ export default function CampaignsAdminPage() {
                         >
                           <FiCopy size={13} />
                           <span>Reuse</span>
+                        </button>
+
+                        <button
+                          onClick={() => setDeleteTarget(camp)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            backgroundColor: "#FEE2E2",
+                            color: "#991B1B",
+                            border: "1px solid #FECACA",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            marginLeft: "8px",
+                          }}
+                          title="Delete campaign record"
+                        >
+                          <FiTrash2 size={13} />
+                          <span>Delete</span>
                         </button>
                       </td>
                     </tr>
@@ -1345,6 +1475,117 @@ export default function CampaignsAdminPage() {
               >
                 <FiCheck size={15} />
                 <span>{broadcasting ? "Broadcasting..." : "Yes, Broadcast Now"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 4: DELETE CAMPAIGN CONFIRMATION ───────────────────── */}
+      {deleteTarget && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.7)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "20px",
+          }}
+          onClick={() => !isDeletingCampaign && setDeleteTarget(null)}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "14px",
+              width: "100%",
+              maxWidth: "460px",
+              padding: "28px",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "50%",
+                backgroundColor: "#FEF2F2",
+                color: "#DC2626",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <FiTrash2 size={22} />
+            </div>
+
+            <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: "#1F2A44" }}>
+              Delete Campaign Record?
+            </h3>
+
+            <p style={{ margin: "0 0 16px", fontSize: "14px", color: "#64748B", lineHeight: "1.5" }}>
+              Are you sure you want to delete this campaign? This will permanently remove its broadcast stats and history.
+            </p>
+
+            <div
+              style={{
+                backgroundColor: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                borderRadius: "8px",
+                padding: "12px 14px",
+                marginBottom: "20px",
+                fontSize: "13px",
+                color: "#1F2A44",
+                fontWeight: 600,
+              }}
+            >
+              &quot;{deleteTarget.subject}&quot;
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                disabled={isDeletingCampaign}
+                onClick={() => setDeleteTarget(null)}
+                style={{
+                  backgroundColor: "#F1F5F9",
+                  color: "#475569",
+                  border: "none",
+                  padding: "10px 18px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  cursor: isDeletingCampaign ? "not-allowed" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingCampaign}
+                onClick={handleDeleteCampaign}
+                style={{
+                  backgroundColor: "#DC2626",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "10px 22px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: isDeletingCampaign ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 4px 12px rgba(220, 38, 38, 0.25)",
+                }}
+              >
+                <FiTrash2 size={15} />
+                <span>{isDeletingCampaign ? "Deleting..." : "Yes, Delete Campaign"}</span>
               </button>
             </div>
           </div>

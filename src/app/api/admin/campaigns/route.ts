@@ -29,6 +29,8 @@ export async function GET() {
         subscribed: subscribedCount,
         welcomed: welcomedCount,
       },
+      emailConfigured: Boolean(process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim() !== ""),
+      senderEmail: process.env.BREVO_SENDER_EMAIL || "hello@baabfest.com",
     });
   } catch (error) {
     console.error("Error fetching campaigns:", error);
